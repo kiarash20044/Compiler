@@ -1,0 +1,45 @@
+# Basic Operations
+5 3 +                  # Addition: 5 + 3 = 8
+10 4 -                 # Subtraction: 10 - 4 = 6
+7 6 *                  # Multiplication: 7 * 6 = 42
+20 5 /                 # Division: 20 / 5 = 4
+2 8 ^                  # Exponentiation: 2^8 = 256
+17 5 %                 # Modulo: 17 % 5 = 2
+5 !                    # Factorial: 5! = 120
+
+# Constants
+pi                     # Pi constant (3.14159...)
+e                      # Euler's number (2.71828...)
+pi 2 *                 # 2π = 6.28318...
+e 2 ^                  # e² = 7.3890...
+
+# Functions
+-5 abs                 # Absolute value: |-5| = 5
+pi 2 / sin             # sin(π/2) = 1
+pi cos                 # cos(π) = -1
+pi 4 / tan             # tan(π/4) = 1
+16 sqrt                # Square root of 16 = 4
+
+# Stack Operations
+5 10 swap              # Swaps 5 and 10, leaving 10 5 on stack, result = 5
+7 dup                  # Duplicates 7, leaving 7 7 on stack, result = 7
+7 dup *                # Square: 7 * 7 = 49
+
+# Complex Expressions
+3 4 + 5 *              # (3 + 4) * 5 = 35
+2 3 ^ 4 5 + *          # 2³ * (4 + 5) = 8 * 9 = 72
+5 dup ! swap 1 - !     # Computes 5! and 4! = 120 and 24
+pi 4 / sin 2 ^         # sin²(π/4) = 0.5
+3 4 + sqrt             # √(3 + 4) = √7 ≈ 2.646
+2 pi * 180 /           # Convert radians to degrees: 2π radians = 360 degrees
+
+# Advanced/Edge Cases
+0 !                    # 0! = 1
+1 0 /                  # Division by zero (should show error)
+-5 !                   # Factorial of negative number (should show error)
+1.5 !                  # Factorial of non-integer (should show error)
+20 !                   # Large factorial (2432902008176640000)
+21 !                   # Very large factorial (should use floating-point)
+1.23e5 1000 /          # Scientific notation: 123000 / 1000 = 123
+-2 3 ^                 # Negative base with integer exponent: (-2)³ = -8
+-4 0.5 ^               # Negative base with non-integer exponent (should error or give NaN) 

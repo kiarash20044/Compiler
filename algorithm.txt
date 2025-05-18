@@ -1,0 +1,201 @@
+# Math Compiler Algorithm and Process Flow
+
+## Overview
+The Math Compiler is an application that converts mathematical expressions written in Reverse Polish Notation (RPN) or natural language into x86-64 assembly code. This document provides a detailed explanation of the algorithm and processes that the application follows.
+
+## Core Components
+1. **Compiler Class** - Handles the conversion of RPN expressions to assembly
+2. **NaturalLanguageProcessor Class** - Converts natural language to RPN
+3. **Token Class** - Represents individual elements in expressions
+4. **Main Program** - Handles user interaction, file I/O, and workflow orchestration
+
+## Detailed Process Flow
+
+### 1. Input Processing
+The application accepts input in three ways:
+- Interactive mode where users can type expressions directly
+- Command-line arguments for direct expression compilation
+- Reading expressions from an input file
+
+When an expression is provided, the system first determines if it's written in natural language or RPN format.
+
+#### Natural Language Detection Algorithm
+```
+function isNaturalLanguage(expression):
+    For each character i in expression:
+        Skip spaces
+        If character is alphabetic AND:
+            - Not 'e' or 'E' (scientific notation)
+            - Not part of function names (sin, cos, tan, sqrt, abs, dup, swap)
+            - Not part of constants (pi, e)
+            Then return true (it's natural language)
+    Return false (it's RPN)
+```
+
+### 2. Natural Language Processing
+If the input is determined to be natural language, it goes through a two-step conversion process:
+
+#### A. Tokenization of Natural Language
+```
+function tokenizeNaturalLanguage(naturalExpression):
+    Preprocess by converting to lowercase
+    Replace special terms with placeholders (e.g., "square root" -> "sqrt")
+    Tokenize the expression into individual words
+    Map number words to numeric values (e.g., "one" -> "1")
+    Map operation words to operators (e.g., "plus" -> "+")
+    Return the processed tokens in infix notation
+```
+
+#### B. Infix to RPN Conversion (Shunting Yard Algorithm)
+```
+function infixToRPN(tokens):
+    Initialize empty output queue and operator stack
+    For each token in the infix expression:
+        If token is a number, add to output queue
+        If token is a function or constant, push to operator stack
+        If token is an operator:
+            While (operator stack not empty AND 
+                  top of stack is not left parenthesis AND 
+                  (top has higher precedence OR
+                   top has equal precedence and token is left-associative)):
+                Pop from operator stack to output queue
+            Push token to operator stack
+        If token is left parenthesis, push to operator stack
+        If token is right parenthesis:
+            While top of operator stack is not left parenthesis:
+                Pop from operator stack to output queue
+            Discard the left parenthesis
+    While operator stack is not empty:
+        Pop from operator stack to output queue
+    Return the output queue as a space-separated string
+```
+
+### 3. RPN Expression Compilation
+Once the expression is in RPN format, the compiler processes it in these steps:
+
+#### A. Tokenization of RPN
+```
+function tokenize(expression):
+    Split expression into tokens
+    For each token:
+        If token is a number (including scientific notation):
+            Create a NUMBER token
+        Else if token is a known constant (pi, e):
+            Create a CONSTANT token
+        Else if token is a stack operation (swap, dup):
+            Create a STACK_OP token
+        Else if token is a function (abs, sin, cos, tan, sqrt):
+            Create a FUNCTION token
+        Else if token is an operator (+, -, *, /, ^, %, !):
+            Create an OPERATOR token
+        Else:
+            Throw an error for unknown token
+    Return the list of tokens
+```
+
+#### B. Assembly Generation
+```
+function generateAssembly(tokens):
+    Generate assembly preamble (headers, sections, data definitions)
+    Define constants, printf format string, error messages
+    Set up the main function and stack frame
+    Initialize the runtime stack pointer (r12)
+
+    For each token in the token list:
+        If token is a NUMBER:
+            Generate code to load the value and push it onto the stack
+        If token is a CONSTANT:
+            Generate code to load the constant value and push it onto the stack
+        If token is an OPERATOR:
+            Check for sufficient operands on stack
+            Generate code specific to the operator:
+                For binary operators (+, -, *, /, ^, %):
+                    Pop two values, perform operation, push result
+                For unary operators (!):
+                    Pop one value, perform operation, push result
+            Include error handling (division by zero, etc.)
+        If token is a FUNCTION (sin, cos, tan, sqrt, abs):
+            Check for sufficient operands
+            Generate code to call the appropriate math function
+        If token is a STACK_OP (swap, dup):
+            Generate stack manipulation code
+
+    Generate code to print the final result
+    Generate error handling functions
+    Generate stack helper functions (push_stack, pop_stack)
+    Generate program cleanup and exit code
+```
+
+### 4. Output Generation
+The generated assembly code is either:
+- Displayed to the console (for immediate viewing)
+- Written to an output file (for later use)
+- Both displayed and saved (typical case)
+
+The output file is named based on:
+- User-specified filename if provided
+- A sanitized version of the input expression if no filename is provided
+
+#### Filename Sanitization Algorithm
+```
+function sanitizeForFilename(expression):
+    Replace invalid characters with underscores
+    Limit length to avoid excessively long filenames
+    Add .asm extension if not present
+    Return the sanitized filename
+```
+
+### 5. Stack Implementation in Generated Assembly
+The compiler implements a runtime stack for expression evaluation:
+
+```
+push_stack:
+    ; Store value in xmm0 at the current stack position
+    movsd [rsp + r12*8], xmm0
+    inc r12  ; Increment stack pointer
+    ret
+
+pop_stack:
+    ; Check for stack underflow
+    cmp r12, 0
+    jle stack_underflow
+    
+    ; Decrement stack pointer
+    dec r12
+    ; Load the value from stack into xmm0
+    movsd xmm0, [rsp + r12*8]
+    ret
+```
+
+### 6. Error Handling
+The generated assembly includes error handling for:
+- Division by zero
+- Stack underflow (not enough operands for an operation)
+- Invalid operations (e.g., factorial of negative number)
+
+### 7. Complete Execution Flow
+1. Application starts and parses command-line arguments
+2. Determines the input method (interactive, command-line, or file)
+3. For each expression:
+   a. Checks if it's natural language
+   b. If yes, converts to RPN via the Natural Language Processor
+   c. Tokenizes the RPN expression
+   d. Generates assembly code
+   e. Outputs the result to console and/or file
+4. Provides error messages for any issues encountered
+
+## Assembly Implementation Details
+
+### Mathematical Operations
+- Arithmetic operations use the SSE instruction set (addsd, subsd, mulsd, divsd)
+- Complex operations (pow, factorial) are implemented as helper functions
+- Trigonometric functions call external C library functions via the C runtime
+
+### Memory Management
+- The expression evaluation stack is allocated on the program stack
+- A separate register (r12) tracks the stack pointer position
+- Floating-point values are stored and manipulated using XMM registers
+
+### Output Format
+- Results are printed using the C printf function
+- Results are displayed as double-precision floating-point values 
